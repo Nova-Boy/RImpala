@@ -15,7 +15,8 @@ public class RImpala {
 	private static String CONNECTION_URL;
 
 	private static final String JDBC_DRIVER_NAME = "org.apache.hive.jdbc.HiveDriver";
-
+	private static final String JDBC_IMPALA_DRIVER_NAME = "com.cloudera.impala.jdbc41.Driver";
+	
 	private static Connection con = null;
 
 	public static void main(String[] args) {
@@ -45,6 +46,63 @@ public class RImpala {
 			return false;
 		}
 
+	}
+	
+	
+	
+	public static boolean connectk(String IP, String port,
+			String principal, String db, String krbRealm, String krbHostFQDN,
+			String krbServiceName) {
+
+                if (krbRealm != null && krbHostFQDN != null && krbServiceName != null) {
+			CONNECTION_URL = "jdbc:impala://" + IP + ':' + port + "/" + db
+					+ ";AuthMech=1;KrbRealm=" + krbRealm + ";KrbHostFQDN="
+					+ krbHostFQDN + ";KrbServiceName=" + krbServiceName;
+		} else {
+			CONNECTION_URL = "jdbc:impala://" + IP + ':' + port + "/;" + principal;
+		}
+        
+		System.out.println(CONNECTION_URL);
+		try {
+			Class.forName(JDBC_IMPALA_DRIVER_NAME);
+			con = DriverManager.getConnection(CONNECTION_URL);
+			return true;
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Error1: " + e.getMessage());
+			return false;
+
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Error2: " + e.getMessage());
+			return false;
+		}
+	}
+	
+	
+	public static boolean connect(String connectString) {
+
+      
+		CONNECTION_URL = connectString;
+		
+        
+		System.out.println(CONNECTION_URL);
+		try {
+			Class.forName(JDBC_IMPALA_DRIVER_NAME);
+			con = DriverManager.getConnection(CONNECTION_URL);
+			return true;
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Error1: " + e.getMessage());
+			return false;
+
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Error2: " + e.getMessage());
+			return false;
+		}
 	}
 
 	public static boolean close() {
@@ -333,7 +391,7 @@ public class RImpala {
 				ResultSetMetaData metaData = rs.getMetaData();
 
 				int columnCount = metaData.getColumnCount();
-
+				
 
 				//System.out.println("Number of Columns :"+columnCount);
 
@@ -353,14 +411,18 @@ public class RImpala {
 
 				while (rs.next()) {
 
+					
 					String[] dynamicRow = new String[columnCount];
 
 					for (int i = 1; i <= columnCount; i++) {
-
-						dynamicRow[i - 1] = rs.getObject(i).toString();
+						
+						if (rs.getObject(i) != null)
+							dynamicRow[i - 1] = rs.getObject(i).toString();
+						else	
+							dynamicRow[i - 1] = "";
 					}
 					dynamicResult.add(dynamicRow);
-
+					
 
 				}
 				return dynamicResult;
